@@ -4,8 +4,7 @@ import "./globals.css";
 import { AppShell } from "@/components/AppShell";
 
 /*
- * Self-hosted fonts (committed woff2). next/font/google downloads at
- * build time and dies on flaky venue wifi; these load from the repo so
+ * Self-hosted fonts (committed woff2). next/font loads from the repo so
  * a clean build never touches the network for type.
  *
  * Clash Grotesk carries display type; Plus Jakarta Sans (variable)
@@ -36,7 +35,8 @@ const data = localFont({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
+  themeColor: "#0a0b0d",
+  colorScheme: "dark",
 };
 
 export const metadata: Metadata = {
@@ -46,6 +46,22 @@ export const metadata: Metadata = {
   },
   description:
     "A non-custodial margin engine that cross-margins a Uniswap v4 LP against an offsetting short hedge on one SPAN-style grid, nets the same book to a fraction of the collateral, and settles a flash crash in one transaction.",
+  applicationName: "ZeroMargin",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }, { url: "/favicon.ico", sizes: "any" }],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
+  openGraph: {
+    title: "ZeroMargin — cross-venue margin engine",
+    description:
+      "Net LP risk against an offsetting hedge on one SPAN-style grid. Settle shocks in one transaction.",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ZeroMargin",
+    description: "Cross-venue margin netting and atomic crash settlement.",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -54,7 +70,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${display.variable} ${body.variable} ${data.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col bg-background text-text">
         <div aria-hidden="true" className="noise-overlay" />
         <div aria-hidden="true" className="page-rails" />
         <AppShell>{children}</AppShell>
