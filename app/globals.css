@@ -1,46 +1,56 @@
-/* ZeroMargin · settlement console
-   True black canvas, one amber accent, bone numerals.
+/* ZeroMargin · engraved clearing console
+   Design language ported from the Obligor reference:
+   #121212 canvas, engraved cards with groove edges, page rails,
+   monospace figures, one warm accent (gold) + steel detail words.
    Every figure on screen is computed from lib/spanMath at render.
    See brand.md. */
 @import "tailwindcss";
 
 :root {
   /* canvas */
-  --background: #0a0b0d;
-  --surface: #101215;
-  --surface-raised: #17191d;
-  --line: #23262b;
-  --line-strong: #35393f;
+  --background: #121212;
+  --surface: #161616;
+  --surface-raised: #1c1c1c;
+  --line: #202020;
+  --line-strong: #2f2f2f;
+  /* engraved card edges */
+  --edge-groove: #090909;
+  --edge-light: #202020;
   /* words */
-  --text: #f4f6f8;
-  --text-muted: #9ba3ad;
-  --text-dim: #6e757e;
-  /* the one accent: amber, the desk's signal color */
-  --saffron: #efa94a;
-  --saffron-dim: #2a2116;
-  --bone: #e8eaec;
-  --ink: #191106;
+  --text: #e8e8e8;
+  --text-muted: #8a8a8a;
+  --text-dim: #616161;
+  /* the one warm accent: gold — the desk's own signal color */
+  --gold: #ffde95;
+  --gold-dim: #2a2412;
+  --steel: #6f7c88;
+  --bone: #e8e8e8;
+  --ink: #121212;
   /* pnl semantics */
-  --green: #3fcf8e;
-  --green-dim: #17301f;
-  --red: #f26354;
+  --green: #45d09d;
+  --green-dim: #12281e;
+  --red: #f16056;
   --red-dim: #38211d;
+  /* giant outline wordmark */
+  --wordmark-stroke: #3a3a3a;
   /* legacy aliases (other pages reskin through these) */
-  --cobalt: var(--saffron);
-  --cobalt-dim: var(--saffron-dim);
-  --blue: var(--saffron);
-  --blue-dim: var(--saffron-dim);
-  --paper: var(--saffron);
-  --ring: var(--saffron);
-  --console: #101215;
-  --console-line: #23262b;
-  --console-text: #f4f6f8;
-  --console-amber: var(--saffron);
-  --console-amber-dim: var(--saffron-dim);
-  --down-bright: #f26354;
-  --up-bright: #3fcf8e;
+  --saffron: var(--gold);
+  --saffron-dim: var(--gold-dim);
+  --cobalt: var(--gold);
+  --cobalt-dim: var(--gold-dim);
+  --blue: var(--gold);
+  --blue-dim: var(--gold-dim);
+  --paper: var(--bone);
+  --ring: var(--bone);
+  --console: #161616;
+  --console-line: #202020;
+  --console-text: #e8e8e8;
+  --console-amber: var(--gold);
+  --console-amber-dim: var(--gold-dim);
+  --down-bright: #f16056;
+  --up-bright: #45d09d;
   /* curves */
-  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
 }
 
 @theme inline {
@@ -49,6 +59,8 @@
   --color-surface-raised: var(--surface-raised);
   --color-line: var(--line);
   --color-line-strong: var(--line-strong);
+  --color-edge-groove: var(--edge-groove);
+  --color-edge-light: var(--edge-light);
   --color-text: var(--text);
   --color-muted: var(--text-muted);
   --color-dim: var(--text-dim);
@@ -72,9 +84,13 @@
   --color-saffron: var(--saffron);
   --color-saffron-dim: var(--saffron-dim);
   --color-bone: var(--bone);
-  --font-sans: var(--font-display);
+  --color-gold: var(--gold);
+  --color-gold-dim: var(--gold-dim);
+  --color-steel: var(--steel);
+  --font-sans: var(--font-body);
   --font-mono: var(--font-data);
-  --radius-panel: 10px;
+  --font-display: var(--font-clash);
+  --radius-panel: 22px;
   --radius-field: 8px;
 }
 
@@ -91,14 +107,14 @@ body {
 body {
   background: var(--background);
   color: var(--text);
-  font-family: var(--font-sans), Inter, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   font-size: 14px;
 }
 
 ::selection {
-  background: var(--saffron);
+  background: var(--gold);
   color: var(--ink);
 }
 
@@ -107,11 +123,110 @@ body {
   outline-offset: 2px;
 }
 
+/* ── Obligor-grade chrome ─────────────────────────────────────── */
+
+/* Film grain over the whole page, barely there */
+.noise-overlay {
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  position: fixed;
+  inset: 0;
+}
+
+/* Drafted side rails that frame the content column on wide screens */
+.page-rails {
+  z-index: 30;
+  pointer-events: none;
+  border-left: 1px solid var(--edge-groove);
+  border-right: 1px solid var(--edge-groove);
+  box-shadow: 1px 0 0 var(--edge-light), -1px 0 0 var(--edge-light);
+  width: 100%;
+  max-width: 1332px;
+  position: fixed;
+  inset: 0 auto 0 50%;
+  transform: translate(-50%);
+}
+@media (max-width: 1331px) {
+  .page-rails {
+    display: none;
+  }
+}
+
+/* Blueprint grid behind hero sections, radially faded */
+.grid-backdrop {
+  background-image: linear-gradient(to right, var(--line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(90% 70% at 50% 0, #000 30%, #0000 75%);
+  mask-image: radial-gradient(90% 70% at 50% 0, #000 30%, #0000 75%);
+}
+
+/* The engraved card: surface + inset groove shadow, no radius of its own */
+.engraved {
+  border: 1px solid var(--edge-light);
+  box-shadow: 1px -1px 0 var(--edge-groove), -1px 1px 0 var(--edge-groove);
+}
+
+/* Primary action: light capsule, embossed, presses on click */
+.btn-light {
+  background: var(--bone);
+  color: var(--ink);
+  transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
+  text-shadow: 0 1px #dedede;
+  box-shadow:
+    0 6px 12px rgba(232, 232, 232, 0.06),
+    0 6px 14px rgba(94, 94, 94, 0.12),
+    0 2px 1px rgba(40, 40, 40, 0.1);
+}
+.btn-light:hover {
+  background: #f5f5f5;
+}
+.btn-light:active {
+  transform: scale(0.97);
+}
+
+/* Huge outlined wordmark for the closing ticker */
+.wordmark-stroke {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--wordmark-stroke);
+  padding: 0.08em 0.12em 0.16em;
+  line-height: 1.3;
+  display: inline-block;
+}
+
+/* Seamless marquee (two identical tracks inside .marquee) */
+.marquee {
+  display: flex;
+  overflow: hidden;
+  gap: var(--marquee-gap, 1rem);
+  user-select: none;
+}
+.marquee-track {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--marquee-gap, 1rem);
+  min-width: 100%;
+  animation: marquee var(--marquee-duration, 40s) linear infinite;
+}
+@keyframes marquee {
+  to {
+    transform: translateX(calc(-100% - var(--marquee-gap, 1rem)));
+  }
+}
+.marquee-paused,
+.marquee-paused .marquee-track,
+.marquee-paused .marquee {
+  animation: none;
+}
+
 /* Slider: the terminal's shock control */
 input[type="range"] {
   appearance: none;
-  height: 3px;
-  background: var(--line-strong);
+  height: 4px;
+  background: var(--surface-raised);
   border-radius: 2px;
   cursor: pointer;
 }
@@ -120,43 +235,28 @@ input[type="range"]::-webkit-slider-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--saffron);
-  border: 3px solid #0a0b0d;
+  background: var(--gold);
+  border: 4px solid var(--background);
   box-shadow: 0 0 0 1px var(--line-strong);
-  transition: transform 120ms ease-out;
+  transition: transform 120ms var(--ease-out);
 }
 input[type="range"]::-moz-range-thumb {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--saffron);
-  border: 3px solid #0a0b0d;
+  background: var(--gold);
+  border: 4px solid var(--background);
 }
 input[type="range"]:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 4px;
 }
 
-/* Amber fill carries dark ink text everywhere */
+/* Light fill carries dark ink text everywhere */
 a.bg-paper,
 button.bg-paper,
 .bg-amber-ink {
   color: var(--ink);
-}
-
-/* Seamless settlement ticker */
-.marquee {
-  display: flex;
-  width: max-content;
-  animation: marquee-slide 32s linear infinite;
-}
-@keyframes marquee-slide {
-  to {
-    transform: translateX(-50%);
-  }
-}
-.marquee-paused {
-  animation-play-state: paused;
 }
 
 .no-scrollbar::-webkit-scrollbar {
@@ -166,12 +266,8 @@ button.bg-paper,
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
-/* ── ink / bone / saffron chrome ─────────────────────────────── */
+/* ── ink / gold chrome ───────────────────────────────────────── */
 /* One orchestrated entrance per page */
 .rise {
   animation: rise 0.5s var(--ease-out) both;
@@ -210,6 +306,7 @@ button.bg-paper,
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+  .marquee-track,
   .marquee {
     animation: none;
   }

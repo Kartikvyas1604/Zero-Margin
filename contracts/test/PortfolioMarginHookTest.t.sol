@@ -75,6 +75,7 @@ contract PortfolioMarginHookTest is Test {
         require(address(hook) == hookAddress, "nonce prediction drifted");
         app = new ClearingAquaApp(IAqua(address(aqua)), address(token), address(adapter), feeKeeper, poolId, ENTRY_PRICE);
         hook.setEngine(IClearingMarginEngine(address(app)));
+        hook.setPoolId(poolId);
         app.setHook(address(hook));
 
         // GV-04 prestate: trader ships 12,000e6 and opens the book
@@ -97,12 +98,14 @@ contract PortfolioMarginHookTest is Test {
     // ── the withdrawals ───────────────────────────────────────────
 
     /// Liquidity whose removal shows exactly `usdTarget` of value in the
-    /// token0 leg (canonical getAmount0ForLiquidity), solved so the hook's
-    /// mulDiv lands exactly: L = ceil(usd × den / Δ) with Δ < den.
+    /// token0 leg under the hook's canonical in-range branch:
+    /// amount0 = L ⊗ (sqrtUpper − sqrtCurrent) / (sqrtUpper·sqrtCurrent/2^96),
+    /// solved by the exact inverse L = ceil(usd·den / (sqrtUpper − current)).
     function burnedLiquidityFor(uint256 usdTarget) internal view returns (uint128) {
-        (uint160 sqrtA, uint160 sqrtB) = rangeSqrt();
-        uint256 delta = sqrtB - sqrtA;
-        uint256 den = FullMath.mulDiv(uint256(sqrtA), uint256(sqrtB), Q96);
+        (, uint160 sqrtB) = rangeSqrt(); // [lower, upper] of the demo range
+        uint160 sqrtC = currentSqrtP; // live price, inside the range
+        uint256 den = FullMath.mulDiv(uint256(sqrtB), uint256(sqrtC), Q96);
+        uint256 delta = uint256(sqrtB) - uint256(sqrtC);
         uint256 liquidity = (usdTarget * den + delta - 1) / delta;
         return SafeCast.toUint128(liquidity);
     }
@@ -155,13 +158,18 @@ contract PortfolioMarginHookTest is Test {
     /// cannot mint exactly 80,000e6 at the $3k fold, so the wiring test pins
     /// the revert to the pair the engine computes for THIS integer.
     function hookWithdrawnUsdNow() internal view returns (uint256) {
-        (uint160 sqrtA, uint160 sqrtB) = rangeSqrt();
-        uint256 delta = sqrtB - sqrtA;
-        uint256 den = FullMath.mulDiv(uint256(sqrtA), uint256(sqrtB), Q96);
+        (, uint160 sqrtB) = rangeSqrt(); // [lower, upper] of the demo range
+        uint160 sqrtC = currentSqrtP; // live price, inside the range
+        uint256 den = FullMath.mulDiv(uint256(sqrtB), uint256(sqrtC), Q96);
         uint256 L = uint256(burnedLiquidityFor(WITHDRAW_USD));
-        uint256 amount0 = FullMath.mulDiv(L, delta, den);
-        uint256 amount1 = FullMath.mulDiv(L, delta, Q96);
+        uint256 amount0 = FullMath.mulDiv(L, sqrtB - sqrtC, den);
+        uint256 amount1 = FullMath.mulDiv(L, sqrtC - rangeSqrtLower(), Q96);
         return amount0 + (amount1 * uint256(app.bookEntryPrice(trader))) / 1e18;
+    }
+
+    function rangeSqrtLower() internal view returns (uint160) {
+        (uint160 sqrtA, ) = rangeSqrt();
+        return sqrtA;
     }
 
     function test_UnsafeWithdrawalReverts_ExactGoldenPair() public {

@@ -7,7 +7,7 @@
         check-submission snapshot screenshots ci web-build web-test
 
 setup:
-	@echo "== forge deps =="; cd contracts && forge install openzeppelin/openzeppelin-contracts@v5.1.0 >/dev/null 2>&1 && forge install Uniswap/v4-core Uniswap/v4-periphery foundry-rs/forge-std >/dev/null 2>&1 || true
+	@echo "== forge deps =="; cd contracts && forge install openzeppelin/openzeppelin-contracts@v5.1.0 >/dev/null 2>&1 && forge install Uniswap/v4-core Uniswap/v4-periphery foundry-rs/forge-std transmissions11/solmate >/dev/null 2>&1 || true
 	@echo "== npm =="; npm ci || npm install
 
 build:
@@ -54,6 +54,16 @@ deploy-testnet:
 	trader_addr=$${DEMO_TRADER:-0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266}; \
 	cd contracts && POOL_MANAGER_ADDRESS=$$pool_manager_addr DEMO_TRADER=$$trader_addr \
 	forge script script/DeploySepolia.s.sol --fork-url $${BASE_SEPOLIA_RPC_URL:-https://sepolia.base.org} --private-key $$DEMO_PRIVATE_KEY --broadcast -vvv)
+
+deploy-testnet-pool:
+	# Deploys the REAL-pool demo stack to Base Sepolia: mined hook + real pool
+	# id + DemoLPRouter + LP seed + the open book. Same env as deploy-testnet.
+	# After it: cast send the router's removeLP for the on-camera SpanMarginBreach.
+	set -a; . ./.env.local; set +a; \
+	if [ -z "$$DEMO_PRIVATE_KEY" ]; then echo "DEMO_PRIVATE_KEY missing in .env.local"; exit 1; fi; \
+	(pool_manager_addr=$${UNISWAP_V4_POOL_MANAGER_BASE_SEPOLIA:-0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408}; \
+	cd contracts && POOL_MANAGER_ADDRESS=$$pool_manager_addr \
+	forge script script/DeployRealPool.s.sol --fork-url $${BASE_SEPOLIA_RPC_URL:-https://sepolia.base.org} --private-key $$DEMO_PRIVATE_KEY --broadcast -vvv)
 
 snapshot:
 	cd contracts && forge snapshot --check && echo "GAS SNAPSHOT OK"
